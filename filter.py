@@ -6,4 +6,4 @@ class MyFilter:
         pass
 
     def test(self, dir_path):
-        pass
+        print("hello")
