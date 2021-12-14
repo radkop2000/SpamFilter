@@ -166,6 +166,7 @@ for filename, emaill in generator:
         if i in ['$', ' ', '@']:
             stripped_email += i
             continue
+            continue
         if i.isalpha():
             stripped_email += i
     finish = stripped_email.split()
