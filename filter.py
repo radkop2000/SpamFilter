@@ -21,6 +21,7 @@ class MyFilter:
             else:
                 self.final_dict[i] = final_dict[i]
 
+    #
     def test(self, dir_path):
         corpus = Corpus(dir_path)
         generator = corpus.emails()
