@@ -47,6 +47,3 @@ if __name__ == "__main__":
 
     filter.test("data/1")
     print(quality.compute_quality_for_corpus(os.path.join("data", "1")))
-
-    # found 472 spams out of 500, found 2534 hams out of 2551
-    # 0.9382022471910112
