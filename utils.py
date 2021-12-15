@@ -90,7 +90,7 @@ def preprocess_email(email):
         if not word.isalpha():
             for i in word:
                 if not i.isalpha():
-                    word = word.replace(i, '', 1)
+                    word = word.replace(i, ' ', 1)
         if len(word) <= 2:
             continue
         elif word in empty_words:
@@ -99,7 +99,8 @@ def preprocess_email(email):
             word = word.removesuffix(suffix)
         for prefix in prefixes:
             word = word.removeprefix(prefix)
-        words.append(word)
+        for i in word.split():
+            words.append(i)
     return words
 
 

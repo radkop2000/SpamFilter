@@ -1,3 +1,5 @@
+import collections
+
 import utils
 from termcolor import colored
 from corpus import Corpus
@@ -12,6 +14,7 @@ class MyFilter:
 
     def train(self, dir_path):
         final_dict = utils.get_final_dict(dir_path)
+        print(list(collections.Counter(final_dict))[:-100])
         for i in final_dict:
             if i in self.final_dict:
                 self.final_dict[i] = (self.final_dict[i] + final_dict[i]) / 2
