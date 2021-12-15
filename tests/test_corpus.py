@@ -40,7 +40,7 @@ class TestCorpus(unittest.TestCase):
         # Exercise the SUT
         observed = {}
         with replaced_open():
-            for fname, contents in corpus.emails():
+            for fname, contents in corpus.sorted_emails():
                 observed[fname] = contents
         # Verify the results
         self.assertEqual(len(self.expected), len(observed),
@@ -57,7 +57,7 @@ class TestCorpus(unittest.TestCase):
         # Exercise the SUT
         observed = {}
         with replaced_open():
-            for fname, contents in corpus.emails():
+            for fname, contents in corpus.sorted_emails():
                 observed[fname] = contents
         # Verify the results
         self.assertEqual(len(self.expected), len(observed),

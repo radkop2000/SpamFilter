@@ -2,6 +2,7 @@ import os
 from io import StringIO
 from html.parser import HTMLParser
 import collections
+import corpus
 
 
 def read_classification_from_file(file_path):
@@ -40,20 +41,6 @@ class MLStripper(HTMLParser):
     def get_data(self):
         return self.text.getvalue()
 
-class Corpus:
-
-    def __init__(self, folder):
-        self.folder = folder
-
-    def emails(self, status):
-        filenames = os.listdir(self.folder)
-        for filename in filenames:
-            if filename[0] == '!':
-                continue
-            if filename not in status:
-                continue
-            with open(os.path.join(self.folder, filename), 'r', encoding='utf-8') as file:
-                yield filename, file.read()
 
 def strip_tags(html):
     s = MLStripper()
@@ -62,41 +49,60 @@ def strip_tags(html):
 
 
 def get_dict(path, status):
-    empty_words = ['com', 'all', 'just', 'being', 'over', 'both', 'through', 'yourselves', 'its', 'before', 'herself', 'had', 'should', 'to', 'only', 'under', 'ours', 'has', 'do', 'them', 'his', 'very', 'they', 'not', 'during', 'now', 'him', 'nor', 'did', 'this', 'she', 'each', 'further', 'where', 'few', 'because', 'doing', 'some', 'are', 'our', 'ourselves', 'out', 'what', 'for', 'while', 'does', 'above', 'between', 't', 'be', 'we', 'who', 'were', 'here', 'hers', 'by', 'on', 'about', 'of', 'against', 's', 'or', 'own', 'into', 'yourself', 'down', 'your', 'from', 'her', 'their', 'there', 'been', 'whom', 'too', 'themselves', 'was', 'until', 'more', 'himself', 'that', 'but', 'don', 'with', 'than', 'those', 'he', 'me', 'myself', 'these', 'up', 'will', 'below', 'can', 'theirs', 'my', 'and', 'then', 'is', 'am', 'it', 'an', 'as', 'itself', 'at', 'have', 'in', 'any', 'if', 'again', 'no', 'when', 'same', 'how', 'other', 'which', 'you', 'after', 'most', 'such', 'why', 'a', 'off', 'i', 'yours', 'so', 'the', 'having', 'once', 'net', 'org'
-             , 'http', 'version', 'type', 'subject', 'www']
-    fin = ""
-    cp = Corpus(path)
-    generator = cp.emails(status)
-    finito3 = []
-    for file_name, msg in generator:
-        email = msg
-        email = strip_tags(email)
-        email = email.lower()
-        for word in email.split():
-            if '@' in word:
-                finito3.append((word, file_name))
-        stripped_email = ""
-        for i in email:
-            if i in ['$', ' ', '@']:
-                stripped_email += i
-                continue
-            if not i.isalpha():
-                i = ' '
-            stripped_email += i
-        fin += stripped_email
-    finito = fin.split()
-    finito2 = []
-    for word in finito:
-        if '@' in word:
+    fin = []
+    cp = corpus.Corpus(path)
+    generator = cp.sorted_emails(status)
+    for fname, email in generator:
+        e = preprocess_email(email)
+        for i in range(len(e)):
+            fin.append(e[i])
+    print(collections.Counter(fin).most_common(50))
+    return collections.Counter(fin)
+
+
+def preprocess_email(email):
+    email = strip_tags(email)
+    empty_words = ['com', 'all', 'just', 'being', 'over', 'both', 'through', 'yourselves', 'its', 'before', 'herself',
+                   'had', 'should', 'to', 'only', 'under', 'ours', 'has', 'do', 'them', 'his', 'very', 'they', 'not',
+                   'during', 'now', 'him', 'nor', 'did', 'this', 'she', 'each', 'further', 'where', 'few', 'because',
+                   'doing', 'some', 'are', 'our', 'ourselves', 'out', 'what', 'for', 'while', 'does', 'above',
+                   'between', 't', 'be', 'we', 'who', 'were', 'here', 'hers', 'by', 'on', 'about', 'of', 'against', 's',
+                   'or', 'own', 'into', 'yourself', 'down', 'your', 'from', 'her', 'their', 'there', 'been', 'whom',
+                   'too', 'themselves', 'was', 'until', 'more', 'himself', 'that', 'but', 'don', 'with', 'than',
+                   'those', 'he', 'me', 'myself', 'these', 'up', 'will', 'below', 'can', 'theirs', 'my', 'and', 'then',
+                   'is', 'am', 'it', 'an', 'as', 'itself', 'at', 'have', 'in', 'any', 'if', 'again', 'no', 'when',
+                   'same', 'how', 'other', 'which', 'you', 'after', 'most', 'such', 'why', 'a', 'off', 'i', 'yours',
+                   'so', 'the', 'having', 'once', 'net', 'org', 'http', 'version', 'type', 'subject', 'mon', 'tue',
+                   'wed', 'thu', 'fri', 'sat', 'sun', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep',
+                   'oct', 'nov', 'dec']
+    prefixes = ['un']
+    suffixes = ['ing', 's']
+    words = []
+
+    for word in email.split():
+        word = word.lower()
+        if "@" in word:
             word = 'email'
-        if '$' in word:
-            word = 'dollar'
+        elif "//" in word or "www" in word:
+            word = "hypertext"
+        elif "$" in word:
+            word = "dollar"
+        if not word.isalpha():
+            for i in word:
+                if not i.isalpha():
+                    word = word.replace(i, '', 1)
         if len(word) <= 2:
             continue
-        if word not in empty_words:
-            finito2.append(word)
-    ret = collections.Counter(finito2)
-    return ret
+        elif word in empty_words:
+            continue
+        for suffix in suffixes:
+            word = word.removesuffix(suffix)
+        for prefix in prefixes:
+            word = word.removeprefix(prefix)
+        words.append(word)
+    return words
+
+
 
 
 def get_final_dict(path):
@@ -123,7 +129,6 @@ def get_final_dict(path):
         if final_dict[i] != 1:
             final_final_dict[i] = final_dict[i]
     return final_final_dict
-
 
 
 

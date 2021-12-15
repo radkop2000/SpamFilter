@@ -5,6 +5,7 @@ import confmat
 
 def quality_score(tp, tn, fp, fn):
     score = (tp + tn)/(tp + tn + 10*fp + fn)
+    print(f"found {tp} spams out of {tp+fn}, found {tn} hams out of {tn+fp}")
     return score
 
 
@@ -19,4 +20,4 @@ def compute_quality_for_corpus(path):
 
 
 if __name__ == "__main__":
-    compute_quality_for_corpus(os.path.join("data", "1"))
+    print(compute_quality_for_corpus(os.path.join("data", "1")))

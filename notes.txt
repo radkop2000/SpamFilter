@@ -1,0 +1,18 @@
+
+
+email
+html strip
+capslock ratio
+.lower()
+noise removal
+stemming
+Lemmatization
+split
+counter
+
+implement trainingcorpus
+
+TODO:
+    uppercase ratio
+    PREFIXES AND SUFFIXES
+    zavriet filey

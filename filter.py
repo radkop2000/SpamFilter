@@ -1,5 +1,9 @@
 import utils
 from termcolor import colored
+from corpus import Corpus
+from html.parser import HTMLParser
+import quality
+import os
 
 class MyFilter:
 
@@ -10,19 +14,35 @@ class MyFilter:
         final_dict = utils.get_final_dict(dir_path)
         for i in final_dict:
             if i in self.final_dict:
-                self.final_dict[i] *= final_dict[i]
+                self.final_dict[i] = (self.final_dict[i] + final_dict[i]) / 2
             else:
                 self.final_dict[i] = final_dict[i]
 
     def test(self, dir_path):
-        pass
+        corpus = Corpus(dir_path)
+        generator = corpus.emails()
+        f = open(f"{dir_path}/!prediction.txt", "w")
+        for file_name, email in generator:
+            email = utils.preprocess_email(email)
+            value = 1
+            for word in email:
+                if word in self.final_dict:
+                    value *= self.final_dict[word]
+            if value > 40000:
+                f.write(f"{file_name} SPAM\n")
+            else:
+                f.write(f"{file_name} OK\n")
+
+
+
 
 if __name__ == "__main__":
     filter = MyFilter()
-    filter.train("data/1")
-    print(colored(filter.final_dict, "green"))
-    filter2 = MyFilter()
-    filter2.train("data/2")
-    print(colored(filter2.final_dict, "blue"))
-    filter.train("data/2")
-    print(colored(filter.final_dict, "red"))
+    filter.train("data/3/3")
+    # filter.train("data/3/")
+
+    filter.test("data/1")
+    print(quality.compute_quality_for_corpus(os.path.join("data", "1")))
+
+    # found 472 spams out of 500, found 2534 hams out of 2551
+    # 0.9382022471910112

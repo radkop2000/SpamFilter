@@ -11,7 +11,17 @@ class Corpus:
         for filename in filenames:
             if filename[0] == '!':
                 continue
-            with open(os.path.join(self.folder, filename), 'r', encoding='utf-8') as file:
+            with open(os.path.join(self.folder, filename), 'r', encoding='ISO-8859-1') as file:
+                yield filename, file.read()
+
+    def sorted_emails(self, status):
+        filenames = os.listdir(self.folder)
+        for filename in filenames:
+            if filename[0] == '!':
+                continue
+            if filename not in status:
+                continue
+            with open(os.path.join(self.folder, filename), 'r', encoding='ISO-8859-1') as file:
                 yield filename, file.read()
 
 
