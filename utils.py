@@ -13,6 +13,16 @@ def read_classification_from_file(file_path):
             dictionary[name] = classification
     return dictionary
 
+
+def read_training_from_file(file_path):
+    dictionary = {}
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file.readlines():
+            name, classification = line.split(" ")
+            dictionary[name] = float(classification)
+    return dictionary
+
+
 def get_emails(path, string):
     emails_dict = read_classification_from_file(path)
     target_emails = []
@@ -22,11 +32,10 @@ def get_emails(path, string):
     return target_emails
 
 
-
 def write_classification_to_file(dictionary, file_path):
     with open(file_path, 'w', encoding='utf-8') as file:
         for key in dictionary:
-            file.write(key + ' ' + dictionary[key] + '\n')
+            file.write(key + ' ' + str(dictionary[key]) + '\n')
 
 
 class MLStripper(HTMLParser):
@@ -36,8 +45,10 @@ class MLStripper(HTMLParser):
         self.strict = False
         self.convert_charrefs = True
         self.text = StringIO()
+
     def handle_data(self, d):
         self.text.write(d)
+
     def get_data(self):
         return self.text.getvalue()
 
@@ -56,7 +67,7 @@ def get_dict(path, status):
         e = preprocess_email(email)
         for i in range(len(e)):
             fin.append(e[i])
-    print(collections.Counter(fin).most_common(50))
+    # print(collections.Counter(fin).most_common(50))
     return collections.Counter(fin)
 
 
@@ -76,7 +87,7 @@ def preprocess_email(email):
                    'wed', 'thu', 'fri', 'sat', 'sun', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep',
                    'oct', 'nov', 'dec']
     prefixes = ['un']
-    suffixes = ['ing', 's']
+    suffixes = ['less', 'es', 's', 'ship', 'ing', 'les', 'ly']
     words = []
 
     for word in email.split():
@@ -96,19 +107,37 @@ def preprocess_email(email):
         elif word in empty_words:
             continue
         for suffix in suffixes:
-            word = word.removesuffix(suffix)
+            word = remove_suffix(word, suffix)
         for prefix in prefixes:
-            word = word.removeprefix(prefix)
+            word = remove_prefix(word, prefix)
         for i in word.split():
+            if len(i) <= 2:
+                continue
+            if i in empty_words:
+                continue
+            for suffix in suffixes:
+                i = remove_suffix(i, suffix)
+            for prefix in prefixes:
+                i = remove_prefix(i, prefix)
             words.append(i)
     return words
+
+
+def remove_suffix(input_string, suffix):
+    if suffix and input_string.endswith(suffix):
+        return input_string[:-len(suffix)]
+    return input_string
+
+
+def remove_prefix(input_string, prefix):
+    if input_string.startswith(prefix):
+        return input_string[len(prefix):]
+    return input_string
 #
 
 
-
-
 def get_final_dict(path):
-    final_dict={}
+    final_dict = {}
     spam_list = get_emails(f"{path}/!truth.txt", "SPAM")
     ham_list = get_emails(f"{path}/!truth.txt", "OK")
     spam_dict = get_dict(path, spam_list)
@@ -116,16 +145,18 @@ def get_final_dict(path):
     ratio = len(spam_list)/len(ham_list)
     for word in spam_dict:
         if word in ham_dict:
-            final_dict[word] = (spam_dict[word] / ratio) / ham_dict[word]
+            final_dict[word] = round(
+                (spam_dict[word] / ratio) / ham_dict[word], 4)
         else:
-            final_dict[word] = spam_dict[word]
+            final_dict[word] = round(spam_dict[word], 4)
 
     for word in ham_dict:
         if word not in final_dict:
             if word in spam_dict:
-                final_dict[word] = (spam_dict[word] / ratio) / ham_dict[word]
+                final_dict[word] = round(
+                    (spam_dict[word] / ratio) / ham_dict[word], 4)
             else:
-                final_dict[word] = ham_dict[word] ** -1
+                final_dict[word] = round(ham_dict[word] ** -1, 4)
     final_final_dict = {}
     for i in final_dict:
         if final_dict[i] != 1:
@@ -133,13 +164,7 @@ def get_final_dict(path):
     return final_final_dict
 
 
-
 if __name__ == "__main__":
     # train
     e = get_final_dict("/Users/radovan/PycharmProjects/spam/spamfilter/data/1")
     # test
-
-
-
-
-
