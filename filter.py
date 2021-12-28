@@ -1,27 +1,21 @@
-import collections
-
 import utils
 from corpus import Corpus
-# from html.parser import HTMLParser
-# import quality
-import os
 
 
 class MyFilter:
 
     def __init__(self):
-        self.final_dict = utils.read_training_from_file("learned.txt")
+        self.word_ratio_dict = utils.read_training_from_file("learned.txt")
+        self.boundary = 5000
 
     def train(self, dir_path):
         final_dict = utils.get_final_dict(dir_path)
-        # print(list(collections.Counter(final_dict))[:-100])
         for i in final_dict:
-            if i in self.final_dict:
-                self.final_dict[i] = (self.final_dict[i] + final_dict[i]) / 2
+            if i in self.word_ratio_dict:
+                self.word_ratio_dict[i] = (self.word_ratio_dict[i] + final_dict[i]) / 2
             else:
-                self.final_dict[i] = final_dict[i]
+                self.word_ratio_dict[i] = final_dict[i]
 
-    #
     def test(self, dir_path):
         corpus = Corpus(dir_path)
         generator = corpus.emails()
@@ -30,19 +24,10 @@ class MyFilter:
             email = utils.preprocess_email(email)
             value = 1
             for word in email:
-                if word in self.final_dict:
-                    value *= self.final_dict[word]
-            if value > 400000:
+                if word in self.word_ratio_dict:
+                    value *= self.word_ratio_dict[word]
+            if value > self.boundary:
                 f.write(f"{file_name} SPAM\n")
             else:
                 f.write(f"{file_name} OK\n")
         f.close()
-
-
-if __name__ == "__main__":
-    filter = MyFilter()
-    filter.train("data/3/3")
-    # filter.train("data/3/")
-
-    filter.test("data/1")
-    print(quality.compute_quality_for_corpus(os.path.join("data", "1")))

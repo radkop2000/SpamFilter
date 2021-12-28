@@ -1,4 +1,3 @@
-import os
 from io import StringIO
 from html.parser import HTMLParser
 import collections
@@ -67,7 +66,6 @@ def get_dict(path, status):
         e = preprocess_email(email)
         for i in range(len(e)):
             fin.append(e[i])
-    # print(collections.Counter(fin).most_common(50))
     return collections.Counter(fin)
 
 
@@ -137,7 +135,7 @@ def remove_prefix(input_string, prefix):
 
 
 def get_final_dict(path):
-    final_dict = {}
+    temp_dict = {}
     spam_list = get_emails(f"{path}/!truth.txt", "SPAM")
     ham_list = get_emails(f"{path}/!truth.txt", "OK")
     spam_dict = get_dict(path, spam_list)
@@ -145,26 +143,23 @@ def get_final_dict(path):
     ratio = len(spam_list)/len(ham_list)
     for word in spam_dict:
         if word in ham_dict:
-            final_dict[word] = round(
+            temp_dict[word] = round(
                 (spam_dict[word] / ratio) / ham_dict[word], 4)
         else:
-            final_dict[word] = round(spam_dict[word], 4)
+            temp_dict[word] = round(spam_dict[word], 4)
 
     for word in ham_dict:
-        if word not in final_dict:
+        if word not in temp_dict:
             if word in spam_dict:
-                final_dict[word] = round(
+                temp_dict[word] = round(
                     (spam_dict[word] / ratio) / ham_dict[word], 4)
             else:
-                final_dict[word] = round(ham_dict[word] ** -1, 4)
-    final_final_dict = {}
-    for i in final_dict:
-        if final_dict[i] != 1:
-            final_final_dict[i] = final_dict[i]
-    return final_final_dict
+                temp_dict[word] = round(ham_dict[word] ** -1, 4)
+
+    final_dict = {}
+    for i in temp_dict:
+        if temp_dict[i] != 1:
+            final_dict[i] = temp_dict[i]
+    return final_dict
 
 
-if __name__ == "__main__":
-    # train
-    e = get_final_dict("/Users/radovan/PycharmProjects/spam/spamfilter/data/1")
-    # test

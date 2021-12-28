@@ -3,6 +3,7 @@ from io import StringIO
 from html.parser import HTMLParser
 import collections
 
+
 class MLStripper(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -64,6 +65,8 @@ def function(path, status):
     for word in finito:
         if '@' in word:
             word = 'email'
+        if '$' in word:
+            word = 'dollar'
         if len(word) <= 2:
             continue
         if word not in words:
@@ -72,7 +75,7 @@ def function(path, status):
     ret = collections.Counter(finito2)
     return ret
 
-truth = open("/Users/radovan/PycharmProjects/spam/spamfilter/data/2/!truth.txt", 'r')
+truth = open("/Users/radovan/PycharmProjects/spam/spamfilter/data/1/!truth.txt", 'r')
 
 spam = []
 ham = []
@@ -95,9 +98,10 @@ for line in truth.readlines():
         ham.append(name)
 
 ratio = len(spam) / len(ham)
+print(ratio)
 
-spam_dict = function("data/2", spam)
-ham_dict = function("data/2", ham)
+spam_dict = function("data/1", spam)
+ham_dict = function("data/1", ham)
 
 final_dict = {}
 
@@ -112,18 +116,25 @@ for word in ham_dict:
         if word in spam_dict:
             final_dict[word] = (spam_dict[word] / ratio) / ham_dict[word]
         else:
-            final_dict[word] = ham_dict[word]
+            final_dict[word] = ham_dict[word] ** -1
+
+final_dict2 = {}
+
+for i in final_dict:
+    if final_dict[i] != 1:
+        final_dict2[i] = final_dict[i]
+
+
+final_dict = {}
+final_dict = final_dict2
+
+
+print(sorted(final_dict.items()))
 
 
 
 
-
-
-
-
-
-
-corps = Corpus("data/2")
+corps = Corpus("data/1")
 generator = corps.emails(spam)
 
 how_good = 0
@@ -153,7 +164,7 @@ for filename, emaill in generator:
 print("i catched " ,how_good, " out of " ,count_emails, " spam emails.")
 print("ratio: ", round((how_good/count_emails)*100, 2), "%")
 
-corps = Corpus("data/2")
+corps = Corpus("data/1")
 generator = corps.emails(ham)
 how_good = 0
 count_emails = 0
@@ -166,7 +177,6 @@ for filename, emaill in generator:
         if i in ['$', ' ', '@']:
             stripped_email += i
             continue
-            continue
         if i.isalpha():
             stripped_email += i
     finish = stripped_email.split()
@@ -174,6 +184,10 @@ for filename, emaill in generator:
     for word in finish:
         if word in final_dict:
             value *= final_dict[word]
+            if final_dict[word] > 10:
+                print(word, final_dict[word])
+    if value > 1e+30:
+        print(email)
     if value < 40:
         how_good += 1
     count_emails+=1
